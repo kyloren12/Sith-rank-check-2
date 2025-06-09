@@ -1,0 +1,17 @@
+{
+  "name": "roblox-backend",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "vercel dev",
+    "build": "next build"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.1",
+    "express": "^4.21.0",
+    "noblox.js": "^6.0.2",
+    "dotenv": "^10.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^7.32.0"
+  }
+}
