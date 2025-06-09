@@ -31,14 +31,14 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       const errorMessage = `Failed to fetch groups: ${response.statusText}`;
-      await sendWebhookMessage(`Error: ${errorMessage} Player ID: ${ownerId}, Name: ${name || 'Unknown'}`);
+      await sendWebhookMessage(`Error: ${errorMessage} Player ID: ${ownerId}, Product: ${name || 'Unknown'}, Profile: https://www.roblox.com/users/${ownerId}/profile`);
       return res.status(response.status).json({ success: false, message: "Failed to fetch user groups" });
     }
 
     const userGroup = responseBody.data.find(group => group.group.id === groupId);
     if (!userGroup) {
       const errorMessage = `User is not a member of the group.`;
-      await sendWebhookMessage(`Error: ${errorMessage} Player ID: ${ownerId}, Name: ${name || 'Unknown'}`);
+      await sendWebhookMessage(`Error: ${errorMessage} Player ID: ${ownerId}, Product: ${name || 'Unknown'}, Profile: https://www.roblox.com/users/${ownerId}/profile`);
       return res.status(404).json({ success: false, message: "User not in group" });
     }
 
@@ -46,12 +46,12 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true });
     } else {
       const errorMessage = `Insufficient rank.`;
-      await sendWebhookMessage(`⚠️ ${errorMessage} Player ID: ${ownerId}, Name: ${name || 'Unknown'}`);
+      await sendWebhookMessage(`⚠️ ${errorMessage} Player ID: ${ownerId}, Product: ${name || 'Unknown'}, Profile: https://www.roblox.com/users/${ownerId}/profile`);
       return res.status(200).json({ success: false, message: "Insufficient rank" });
     }
   } catch (error) {
     const errorMessage = `Error: ${error.message}`;
-    await sendWebhookMessage(`❌ ${errorMessage} Player ID: ${ownerId}, Name: ${name || 'Unknown'}`);
+    await sendWebhookMessage(`❌ ${errorMessage} Player ID: ${ownerId}, Name: ${name || 'Unknown'}, Profile: https://www.roblox.com/users/${ownerId}/profile`);
     return res.status(500).json({ success: false, message: "Internal server error" });
   }
 }
