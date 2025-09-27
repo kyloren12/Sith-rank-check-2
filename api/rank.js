@@ -4,6 +4,11 @@ const groupId = parseInt(process.env.GROUP_ID, 10);
 const requiredRank = parseInt(process.env.REQUIRED_RANK, 10);
 const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL;
 
+// 🔹 Extra manual checks
+const extraGroupId = 34419564;        // <-- TGE of Oom
+const extraRequiredRank = 24;       // <-- replace with required rank for that group
+const alwaysAllowedUsers = [944593970, 32404749]; // <-- Oom, other pain IRC member
+
 const sendWebhookMessage = async (message) => {
   try {
     await fetch(discordWebhookUrl, {
@@ -26,6 +31,12 @@ export default async function handler(req, res) {
   }
 
   try {
+    // ✅ Explicit allow list
+    if (alwaysAllowedUsers.includes(Number(ownerId))) {
+      console.log(`User ${ownerId} is always allowed.`);
+      return res.status(200).json({ success: true, message: "User explicitly allowed" });
+    }
+
     const response = await fetch(`https://groups.roblox.com/v1/users/${ownerId}/groups/roles`);
     const responseBody = await response.json();
 
@@ -35,20 +46,23 @@ export default async function handler(req, res) {
       return res.status(response.status).json({ success: false, message: "Failed to fetch user groups" });
     }
 
+    // ✅ First check env-based group/rank
     const userGroup = responseBody.data.find(group => group.group.id === groupId);
-    if (!userGroup) {
-      const errorMessage = `User is not a member of the group.`;
-      await sendWebhookMessage(`Error: ${errorMessage} Player ID: ${ownerId}, Product: ${name || 'Unknown'}, Profile: https://www.roblox.com/users/${ownerId}/profile`);
-      return res.status(404).json({ success: false, message: "User not in group" });
+    if (userGroup && userGroup.role.rank >= requiredRank) {
+      return res.status(200).json({ success: true });
     }
 
-    if (userGroup.role.rank >= requiredRank) {
+    // ✅ Then check extra manual group/rank
+    const extraGroup = responseBody.data.find(group => group.group.id === extraGroupId);
+    if (extraGroup && extraGroup.role.rank >= extraRequiredRank) {
       return res.status(200).json({ success: true });
-    } else {
-      const errorMessage = `Insufficient rank.`;
-      await sendWebhookMessage(`⚠️ ${errorMessage} Player ID: ${ownerId}, Product: ${name || 'Unknown'}, Profile: https://www.roblox.com/users/${ownerId}/profile`);
-      return res.status(200).json({ success: false, message: "Insufficient rank" });
     }
+
+    // ❌ No group matched
+    const errorMessage = `Insufficient rank or not in required group(s).`;
+    await sendWebhookMessage(`⚠️ ${errorMessage} Player ID: ${ownerId}, Product: ${name || 'Unknown'}, Profile: https://www.roblox.com/users/${ownerId}/profile`);
+    return res.status(200).json({ success: false, message: "Insufficient rank" });
+
   } catch (error) {
     const errorMessage = `Error: ${error.message}`;
     await sendWebhookMessage(`❌ ${errorMessage} Player ID: ${ownerId}, Name: ${name || 'Unknown'}, Profile: https://www.roblox.com/users/${ownerId}/profile`);
